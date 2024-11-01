@@ -7,7 +7,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/darksuei/kubeRPC/api"
+	"github.com/darksuei/kubeRPC/v1/api"
 )
 
 type Client struct {

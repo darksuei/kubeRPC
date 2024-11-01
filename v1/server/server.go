@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/darksuei/kubeRPC/api"
+	"github.com/darksuei/kubeRPC/v1/api"
 )
 
 type Server struct {
