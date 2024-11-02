@@ -27,9 +27,9 @@ type RegisterRequest struct {
 
 // Redis Client Setup
 var rdb = redis.NewClient(&redis.Options{
-	Addr:     "localhost:6379", // Update with your Redis address if needed
-	Password: "",               // no password set
-	DB:       0,                // use default DB
+	Addr:     "localhost:6379",
+	Password: "",               
+	DB:       0,               
 })
 
 func Health(w http.ResponseWriter, r *http.Request) {
@@ -46,8 +46,7 @@ func Health(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Service is healthy"))
 }
 
-func GetServiceFunction(w http.ResponseWriter, r *http.Request) {
-	// Get the service name from the query parameters
+func getServiceMethod(w http.ResponseWriter, r *http.Request) {
 	serviceName := r.URL.Query().Get("name")
 	if serviceName == "" {
 		http.Error(w, "Service name is required", http.StatusBadRequest)
@@ -60,7 +59,6 @@ func GetServiceFunction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch the service details from Redis using HGetAll
 	methodDetails, err := rdb.HGet("service:"+serviceName, methodName).Result()
 
 	if err != nil {
@@ -72,20 +70,16 @@ func GetServiceFunction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if the service exists
 	if len(methodDetails) == 0 {
 		http.Error(w, "Service or Method not found", http.StatusNotFound)
 		return
 	}
 
+	// Still return the service details because the host and port are needed
 	serviceDetails, err := rdb.HGetAll("service:" + serviceName).Result()
 
-	log.Println(serviceDetails)
-
-	// Set the response header to application/json
 	w.Header().Set("Content-Type", "application/json")
 
-	// Respond with the service details as JSON
 	response, err := json.Marshal(serviceDetails)
 	if err != nil {
 		http.Error(w, "Error marshalling response", http.StatusInternalServerError)
@@ -96,12 +90,7 @@ func GetServiceFunction(w http.ResponseWriter, r *http.Request) {
 	w.Write(response)
 }
 
-// RegisterService Function
-// At the moment, this would create a new key in Redis for each service
-// and store each method as a field in the hash
-// If the service does not already exist, it creates it
-// If the service already exists, it will update the existing methods
-func RegisterServiceFunction(w http.ResponseWriter, r *http.Request) {
+func registerServiceMethods(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
 
 	if r.Method != http.MethodPost {
@@ -109,7 +98,6 @@ func RegisterServiceFunction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Decode JSON request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
@@ -121,7 +109,15 @@ func RegisterServiceFunction(w http.ResponseWriter, r *http.Request) {
 	redisKey := "service:" + req.ServiceName
 
 	// Set the host
-	err := rdb.WithContext(context.Background()).HSet(redisKey, "host", req.Host).Err()
+	err := rdb.WithContext(context.Background()).HSet(redisKey, "serviceName", req.ServiceName).Err()
+	if err != nil {
+		log.Fatal(err)
+		http.Error(w, "Failed to store service name in Redis", http.StatusInternalServerError)
+		return
+	}
+
+	// Set the host
+	err = rdb.WithContext(context.Background()).HSet(redisKey, "host", req.Host).Err()
 	if err != nil {
 		log.Fatal(err)
 		http.Error(w, "Failed to store host in Redis", http.StatusInternalServerError)
@@ -156,8 +152,7 @@ func RegisterServiceFunction(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Service [%s] registered successfully", req.ServiceName)
 }
 
-func DeleteServiceFunction(w http.ResponseWriter, r *http.Request) {
-	// Get the service name from the query parameters
+func deleteServiceMethod(w http.ResponseWriter, r *http.Request) {
 	serviceName := r.URL.Query().Get("name")
 	if serviceName == "" {
 		http.Error(w, "Service name is required", http.StatusBadRequest)
@@ -175,7 +170,6 @@ func DeleteServiceFunction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Delete the service from Redis
 	deleted, err := rdb.HDel("service:"+serviceName, methodName).Result()
 
 	if err != nil {
@@ -192,13 +186,86 @@ func DeleteServiceFunction(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Method [%s] in Service [%s] deleted successfully", methodName, serviceName)
 }
 
+func getService(w http.ResponseWriter, r *http.Request) {
+	serviceName := r.URL.Query().Get("name")
+	if serviceName == "" {
+		http.Error(w, "Service name is required", http.StatusBadRequest)
+		return
+	}
+
+	serviceDetails, err := rdb.HGetAll("service:" + serviceName).Result()
+
+	if err != nil {
+		if err == redis.Nil {
+			http.Error(w, "Service not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Error retrieving service", http.StatusInternalServerError)
+		return
+	}
+
+	if len(serviceDetails) == 0 {
+		http.Error(w, "Service not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	response, err := json.Marshal(serviceDetails)
+	if err != nil {
+		http.Error(w, "Error marshalling response", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(response)
+}
+
+func getAllServices(w http.ResponseWriter, _ *http.Request) {
+	keys, err := rdb.Keys("service:*").Result()
+	if err != nil {
+		http.Error(w, "Error retrieving services", http.StatusInternalServerError)
+		return
+	}
+
+	if len(keys) == 0 {
+		http.Error(w, "No services found", http.StatusNotFound)
+		return
+	}
+
+	services := make(map[string]interface{})
+
+	for _, key := range keys {
+		serviceDetails, err := rdb.HGetAll(key).Result()
+		if err != nil {
+			http.Error(w, "Error retrieving service", http.StatusInternalServerError)
+			return
+		}
+
+		services[key] = serviceDetails
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	response, err := json.Marshal(services)
+	if err != nil {
+		http.Error(w, "Error marshalling response", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(response)
+}
+
 func main() {
 	log.Println("Running kubeRPC API on port 8080..")
 
 	http.HandleFunc("/health", Health)
-	http.HandleFunc("/get-service-method", GetServiceFunction)
-	http.HandleFunc("/register-service-method", RegisterServiceFunction)
-	http.HandleFunc("/delete-service-method", DeleteServiceFunction)
+	http.HandleFunc("/get-service", getService)
+	http.HandleFunc("/get-all-services", getAllServices)
+	http.HandleFunc("/get-service-method", getServiceMethod)
+	http.HandleFunc("/register-service-method", registerServiceMethods)
+	http.HandleFunc("/delete-service-method", deleteServiceMethod)
 
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatalf("Server failed: %s", err)
