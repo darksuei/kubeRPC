@@ -9,6 +9,7 @@ import (
 
 	"github.com/darksuei/kubeRPC/service_discovery"
 	"github.com/go-redis/redis"
+	"github.com/joho/godotenv"
 )
 
 // Structure for storing a method
@@ -259,6 +260,8 @@ func getAllServices(w http.ResponseWriter, _ *http.Request) {
 }
 
 func main() {
+	godotenv.Load()
+
 	clientset, err := service_discovery.CreateKubeClient()
 
 	if err != nil {

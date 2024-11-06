@@ -7,7 +7,7 @@ app:
   serviceRoleBinding: kuberpc-core-role-binding
   port: 8080
   image:
-    repository: docker.io/darksueii/kuberpc_core
+    repository: docker.io/darksueii/test_kuberpc
     tag: latest
     pullPolicy: Always
 
