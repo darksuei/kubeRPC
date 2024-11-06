@@ -1,0 +1,16 @@
+app:
+  name: kuberpc-core
+  namespace: kuberpc
+  replicas: 1
+  serviceAccountName: kuberpc-core-sa
+  serviceRole: kuberpc-core-role
+  serviceRoleBinding: kuberpc-core-role-binding
+  port: 8080
+  image:
+    repository: docker.io/darksueii/kuberpc_core
+    tag: latest
+    pullPolicy: Always
+
+service:
+  type: ClusterIP
+  protocol: TCP
