@@ -7,6 +7,10 @@ import (
 	"log"
 	"net/http"
 
+	"k8s.io/client-go/kubernetes"
+
+	"github.com/darksuei/kubeRPC/service_discovery"
+
 	"github.com/go-redis/redis"
 )
 
@@ -28,8 +32,8 @@ type RegisterRequest struct {
 // Redis Client Setup
 var rdb = redis.NewClient(&redis.Options{
 	Addr:     "localhost:6379",
-	Password: "",               
-	DB:       0,               
+	Password: "",
+	DB:       0,
 })
 
 func Health(w http.ResponseWriter, r *http.Request) {
@@ -258,6 +262,14 @@ func getAllServices(w http.ResponseWriter, _ *http.Request) {
 }
 
 func main() {
+	clientset, err := service_discovery.CreateKubeClient()
+
+	if err != nil {
+			log.Fatalf("Error creating Kubernetes client: %v", err)
+	}
+
+	service_discovery.GetKubeServices(clientset)
+
 	log.Println("Running kubeRPC API on port 8080..")
 
 	http.HandleFunc("/health", Health)
