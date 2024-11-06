@@ -7,10 +7,7 @@ import (
 	"log"
 	"net/http"
 
-	"k8s.io/client-go/kubernetes"
-
 	"github.com/darksuei/kubeRPC/service_discovery"
-
 	"github.com/go-redis/redis"
 )
 
@@ -265,7 +262,7 @@ func main() {
 	clientset, err := service_discovery.CreateKubeClient()
 
 	if err != nil {
-			log.Fatalf("Error creating Kubernetes client: %v", err)
+		log.Fatalf("Error creating Kubernetes client: %v", err)
 	}
 
 	service_discovery.GetKubeServices(clientset)
