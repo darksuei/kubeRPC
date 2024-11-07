@@ -7,10 +7,18 @@ app:
   serviceRoleBinding: kuberpc-core-role-binding
   port: 8080
   image:
-    repository: docker.io/darksueii/test_kuberpc
+    repository: docker.io/darksueii/kuberpc
     tag: latest
     pullPolicy: Always
 
 service:
   type: ClusterIP
   protocol: TCP
+
+secret:
+  name: kuberpc-core-secret
+  data:
+    NAMESPACE: "kuberpc-dev"
+    REDIS_HOST: "kuberpc-redis-master.kuberpc-dev.svc.cluster.local"
+    REDIS_PORT: "6379"
+    REDIS_PASSWORD: "vcEqSdpm5x"

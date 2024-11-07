@@ -28,18 +28,13 @@ type RegisterRequest struct {
 	Methods     []Method `json:"methods"`
 }
 
-// Redis Client Setup
-var rdb = redis.NewClient(&redis.Options{
-	Addr:     "localhost:6379",
-	Password: "",
-	DB:       0,
-})
+var rdb *redis.Client
 
 func Health(w http.ResponseWriter, r *http.Request) {
 	log.Println("Health check!")
+
 	// Check Redis connection
 	_, err := rdb.Ping().Result()
-
 	if err != nil {
 		log.Printf("Failed to connect to Redis: %s", err)
 		http.Error(w, "Redis connection failed", http.StatusInternalServerError)
@@ -270,6 +265,14 @@ func getAllServices(w http.ResponseWriter, _ *http.Request) {
 
 func main() {
 	godotenv.Load()
+
+	log.Print(os.Getenv("REDIS_HOST") + ":" + os.Getenv("REDIS_PORT"))
+
+	rdb = redis.NewClient(&redis.Options{
+		Addr:     os.Getenv("REDIS_HOST") + ":" + os.Getenv("REDIS_PORT"),
+		Password: os.Getenv("REDIS_PASSWORD"),
+		DB:       0,
+	})
 
 	clientset, err := service_discovery.CreateKubeClient()
 
