@@ -1,6 +1,6 @@
 app:
   name: kuberpc-core
-  namespace: kuberpc
+  namespace: kuberpc-dev
   replicas: 1
   serviceAccountName: kuberpc-core-sa
   serviceRole: kuberpc-core-role

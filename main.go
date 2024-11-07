@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/darksuei/kubeRPC/service_discovery"
 	"github.com/go-redis/redis"
@@ -35,6 +36,7 @@ var rdb = redis.NewClient(&redis.Options{
 })
 
 func Health(w http.ResponseWriter, r *http.Request) {
+	log.Println("Health check!")
 	// Check Redis connection
 	_, err := rdb.Ping().Result()
 
@@ -93,6 +95,7 @@ func getServiceMethod(w http.ResponseWriter, r *http.Request) {
 }
 
 func registerServiceMethods(w http.ResponseWriter, r *http.Request) {
+	log.Print("Registering a service method.")
 	var req RegisterRequest
 
 	if r.Method != http.MethodPost {
@@ -101,6 +104,7 @@ func registerServiceMethods(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Fatal(err)
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
@@ -118,8 +122,13 @@ func registerServiceMethods(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// the host that will be stored wont be local host but rather the kubernetes dns name
+	host := req.ServiceName + "." + os.Getenv("NAMESPACE") + ".svc.cluster.local"
+
+	log.Print(host)
+
 	// Set the host
-	err = rdb.WithContext(context.Background()).HSet(redisKey, "host", req.Host).Err()
+	err = rdb.WithContext(context.Background()).HSet(redisKey, "host", host).Err()
 	if err != nil {
 		log.Fatal(err)
 		http.Error(w, "Failed to store host in Redis", http.StatusInternalServerError)
