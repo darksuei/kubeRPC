@@ -24,8 +24,10 @@ func DeleteMethod(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	
+	redisKey := "service:" + serviceName
 
-	deleted, err := config.Rdb.HDel("service:"+serviceName, methodName).Result()
+	deleted, err := config.Rdb.HDel(redisKey, methodName).Result()
 
 	if err != nil {
 		http.Error(w, "Error deleting service", http.StatusInternalServerError)

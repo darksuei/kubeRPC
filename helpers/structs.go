@@ -14,3 +14,10 @@ type Service struct {
 	ServiceName string   `json:"service_name"`
 	Methods     []Method `json:"methods"`
 }
+
+type ServicePtr struct {
+	Host        *string   `json:"host"`
+	Port        *int      `json:"port"`
+	ServiceName *string   `json:"service_name"`
+	Methods     *[]Method `json:"methods"`
+}

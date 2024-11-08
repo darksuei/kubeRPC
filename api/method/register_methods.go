@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/darksuei/kubeRPC/config"
 	"github.com/darksuei/kubeRPC/helpers"
+	"github.com/go-redis/redis"
 )
 
 func RegisterMethods(w http.ResponseWriter, r *http.Request) {
-	log.Print("Registering a service method.")
 	var req helpers.Service
 
 	if r.Method != http.MethodPost {
@@ -27,35 +26,21 @@ func RegisterMethods(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(req.ServiceName)
-	log.Println("Registering service:", req)
-
 	redisKey := "service:" + req.ServiceName
 
-	// Set the host
-	err := config.Rdb.WithContext(context.Background()).HSet(redisKey, "serviceName", req.ServiceName).Err()
+	serviceDetails, err := config.Rdb.HGetAll("service:" + req.ServiceName).Result()
+
 	if err != nil {
-		log.Fatal(err)
-		http.Error(w, "Failed to store service name in Redis", http.StatusInternalServerError)
+		if err == redis.Nil {
+			http.Error(w, "Service not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Error retrieving service", http.StatusInternalServerError)
 		return
 	}
 
-	// the host that will be stored wont be local host but rather the kubernetes dns name
-	host := req.ServiceName + "." + os.Getenv("NAMESPACE") + ".svc.cluster.local"
-
-	// Set the host
-	err = config.Rdb.WithContext(context.Background()).HSet(redisKey, "host", host).Err()
-	if err != nil {
-		log.Fatal(err)
-		http.Error(w, "Failed to store host in Redis", http.StatusInternalServerError)
-		return
-	}
-
-	// Set the port
-	err = config.Rdb.WithContext(context.Background()).HSet(redisKey, "port", req.Port).Err()
-	if err != nil {
-		log.Fatal(err)
-		http.Error(w, "Failed to store port in Redis", http.StatusInternalServerError)
+	if len(serviceDetails) == 0 {
+		http.Error(w, "Service not found", http.StatusNotFound)
 		return
 	}
 
@@ -76,5 +61,5 @@ func RegisterMethods(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Service [%s] registered successfully", req.ServiceName)
+	fmt.Fprintf(w, "Methods registered in service %s successfully", req.ServiceName)
 }

@@ -37,10 +37,9 @@ func GetMethod(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Still return the service details because the host and port are needed
-	serviceDetails, err := config.Rdb.HGetAll("service:" + serviceName).Result()
-
 	w.Header().Set("Content-Type", "application/json")
+
+	serviceDetails, err := config.Rdb.HGetAll("service:" + serviceName).Result()
 
 	response, err := json.Marshal(serviceDetails)
 	if err != nil {
