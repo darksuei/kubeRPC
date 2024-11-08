@@ -1,4 +1,4 @@
-package config
+package helpers
 
 // Structure for storing a method
 type Method struct {

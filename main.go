@@ -7,7 +7,7 @@ import (
 	api "github.com/darksuei/kubeRPC/api"
 	method "github.com/darksuei/kubeRPC/api/method"
 	service "github.com/darksuei/kubeRPC/api/service"
-	"github.com/darksuei/kubeRPC/config"
+	config "github.com/darksuei/kubeRPC/config"
 	serviceDiscovery "github.com/darksuei/kubeRPC/service_discovery"
 	"github.com/joho/godotenv"
 )
@@ -29,7 +29,7 @@ func main() {
 
 	http.HandleFunc("/health", api.Health)
 	http.HandleFunc("/get-service", service.GetService)
-	http.HandleFunc("/get-all-services", service.GetAllServices)
+	http.HandleFunc("/get-all-services", service.GetServices)
 	http.HandleFunc("/get-service-method", method.GetMethod)
 	http.HandleFunc("/register-service-method", method.RegisterMethods)
 	http.HandleFunc("/delete-service-method", method.DeleteMethod)

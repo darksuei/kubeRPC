@@ -7,7 +7,7 @@ import (
 	"github.com/darksuei/kubeRPC/config"
 )
 
-func GetAllServices(w http.ResponseWriter, _ *http.Request) {
+func GetServices(w http.ResponseWriter, _ *http.Request) {
 	keys, err := config.Rdb.Keys("service:*").Result()
 	if err != nil {
 		http.Error(w, "Error retrieving services", http.StatusInternalServerError)

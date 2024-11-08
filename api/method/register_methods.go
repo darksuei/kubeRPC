@@ -9,11 +9,12 @@ import (
 	"os"
 
 	"github.com/darksuei/kubeRPC/config"
+	"github.com/darksuei/kubeRPC/helpers"
 )
 
 func RegisterMethods(w http.ResponseWriter, r *http.Request) {
 	log.Print("Registering a service method.")
-	var req config.Service
+	var req helpers.Service
 
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
