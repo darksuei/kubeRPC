@@ -1,4 +1,4 @@
-package service_discovery
+package serviceDiscovery
 
 import (
 	"context"
