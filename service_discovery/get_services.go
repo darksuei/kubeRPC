@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/darksuei/kubeRPC/config"
 	"github.com/darksuei/kubeRPC/helpers"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -32,24 +31,7 @@ func GetKubeServices(clientset *kubernetes.Clientset) error {
 			continue
 		}
 
-		fmt.Printf("Registering service: %s\n", service.Name)
-
-		redisKey := "service:" + service.Name
-		host := service.Name + "." + os.Getenv("NAMESPACE") + ".svc.cluster.local"
-
-		// Set the service
-		err := config.Rdb.WithContext(context.Background()).HSet(redisKey, "serviceName", service.Name).Err()
-		if err != nil {
-			log.Fatal(err)
-			return nil
-		}
-
-		// Set the host
-		err = config.Rdb.WithContext(context.Background()).HSet(redisKey, "host", host).Err()
-		if err != nil {
-			log.Fatal(err)
-			return nil
-		}
+		RegisterService(&service)
 	}
 	return nil
 }

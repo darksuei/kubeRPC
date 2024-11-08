@@ -26,7 +26,7 @@ func main() {
 		}
 
 		serviceDiscovery.GetKubeServices(clientset)
-
+		serviceDiscovery.WatchKubeServices(clientset)
 	}
 
 	log.Println("Running kubeRPC API on port 8080..")

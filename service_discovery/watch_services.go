@@ -2,36 +2,43 @@ package serviceDiscovery
 
 import (
 	"context"
-	"fmt"
+	"log"
+	"os"
 
+	"github.com/darksuei/kubeRPC/helpers"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 func WatchKubeServices(clientset *kubernetes.Clientset) {
-	watch, err := clientset.CoreV1().Services("your-namespace").Watch(context.TODO(), metav1.ListOptions{})
+	namespace := os.Getenv("NAMESPACE")
+
+	watch, err := clientset.CoreV1().Services(namespace).Watch(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		fmt.Errorf("error setting up watch: %v", err)
+		log.Printf("error setting up watch: %v", err)
 		return
 	}
 
 	for event := range watch.ResultChan() {
+		svc := event.Object.(*v1.Service)
+
+		excludedServices, err := helpers.ParseJSONArrayFromEnv("EXCLUDE_SERVICES")
+
+		if err != nil {
+			log.Fatalf("Error parsing excluded services: %v", err)
+		}
+
+		if helpers.StringInSlice(excludedServices, svc.Name) {
+			continue
+		}
+
 		switch event.Type {
 		case "ADDED":
-			svc := event.Object.(*v1.Service)
-			fmt.Printf("New service added: %s\n", svc.Name)
-			// Register the new service
+			RegisterService(svc)
 
 		case "DELETED":
-			svc := event.Object.(*v1.Service)
-			fmt.Printf("Service deleted: %s\n", svc.Name)
-			// Remove the service from the registry
-
-		case "MODIFIED":
-			svc := event.Object.(*v1.Service)
-			fmt.Printf("Service modified: %s\n", svc.Name)
-			// Update the service in the registry if necessary
+			RemoveService(svc)
 		}
 	}
 }
