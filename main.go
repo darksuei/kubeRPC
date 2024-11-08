@@ -20,6 +20,8 @@ func main() {
 	godotenv.Load()
 	config.InitRedisClient()
 
+	port := os.Getenv("PORT")
+
 	// Channel to signal graceful shutdown
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
@@ -52,9 +54,9 @@ func main() {
 	http.HandleFunc("/delete-method", method.DeleteMethod)
 
 	// Start HTTP server in a goroutine
-	server := &http.Server{Addr: ":8080"}
+	server := &http.Server{Addr: ":" + port}
 	go func() {
-		log.Println("Running kubeRPC API on port 8080!")
+		log.Printf("Running kubeRPC API on port %s!", port)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server failed: %s", err)
 		}
