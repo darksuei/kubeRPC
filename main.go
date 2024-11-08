@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	api "github.com/darksuei/kubeRPC/api"
 	method "github.com/darksuei/kubeRPC/api/method"
@@ -17,13 +18,16 @@ func main() {
 
 	config.InitRedisClient()
 
-	clientset, err := serviceDiscovery.CreateKubeClient()
+	if os.Getenv("ENABLE_DEFAULT_SERVICE_DISCOVERY") == "true" {
+		clientset, err := serviceDiscovery.CreateKubeClient()
 
-	if err != nil {
-		log.Fatalf("Error creating Kubernetes client: %v", err)
+		if err != nil {
+			log.Fatalf("Error creating Kubernetes client: %v", err)
+		}
+
+		serviceDiscovery.GetKubeServices(clientset)
+
 	}
-
-	serviceDiscovery.GetKubeServices(clientset)
 
 	log.Println("Running kubeRPC API on port 8080..")
 
