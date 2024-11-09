@@ -1,0 +1,46 @@
+version: "3.8"
+services:
+  kuberpc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: "always"
+    ports:
+      - "${PORT}:${PORT}"
+    volumes:
+      - .:/app
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      interval: 10s
+      retries: 10
+      start_period: 60s
+    environment:
+      KUBECONFIG_FILE: ${KUBECONFIG_FILE}
+      NAMESPACE: ${NAMESPACE}
+      PORT: ${PORT}
+      ENABLE_DEFAULT_SERVICE_DISCOVERY: ${ENABLE_DEFAULT_SERVICE_DISCOVERY}
+      EXCLUDE_SERVICES: ${EXCLUDE_SERVICES}
+      FLUSH_DATABASE: ${FLUSH_DATABASE}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  redis_data:
