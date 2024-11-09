@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  kuberpc-core:
+  - apiVersion: v2
+    appVersion: 0.0.0
+    created: "2024-11-09T22:56:56.82705496+01:00"
+    description: A Helm chart for Kubernetes
+    digest: 3533a412193fe8a931fcd3d932643cf601087ab67949191065d5e91867f6edb6
+    name: kuberpc-core
+    type: application
+    urls:
+    - kuberpc-core-0.1.0.tgz
+    version: 0.1.0
+generated: "2024-11-09T22:56:56.824753371+01:00"
