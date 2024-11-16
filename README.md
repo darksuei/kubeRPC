@@ -34,7 +34,7 @@ One of the challenges when transitioning from a monolithic architecture to micro
 kubeRPC can be deployed using a Helm chart.
 
 ```bash
-helm install kuberpc https://github.com/darksuei/kubeRPC/raw/main/helm_chart/kuberpc-core-0.1.0.tgz --namespace <your-namespace> -f /path/to/custom-values.yaml
+helm install kuberpc-core https://github.com/darksuei/kubeRPC/raw/main/helm_chart/kuberpc-core-0.1.0.tgz --namespace <your-namespace> -f /path/to/custom-values.yaml
 ```
 
 Once installed, kubeRPC will:
