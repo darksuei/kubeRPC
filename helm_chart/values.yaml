@@ -5,7 +5,7 @@ app:
   serviceAccountName: kuberpc-core-sa
   serviceRole: kuberpc-core-role
   serviceRoleBinding: kuberpc-core-role-binding
-  port: 8080
+  port: 8088
   image:
     repository: docker.io/darksueii/kuberpc
     tag: latest
@@ -19,6 +19,11 @@ secret:
   name: kuberpc-core-secret
   data:
     NAMESPACE: "kuberpc-dev"
-    REDIS_HOST: "kuberpc-redis-master.kuberpc-dev.svc.cluster.local"
+    PORT: "8080" # Port to expose the service on
+    KUBECONFIG_FILE: "/home/.kube/config" # Set the path to the kubeconfig file if running locally
+    ENABLE_DEFAULT_SERVICE_DISCOVERY: "true" # Set to false if you want to disable the default kubernetes service discovery
+    EXCLUDE_SERVICES: '["kuberpc-redis-headless", "kuberpc-redis-master", "kuberpc-redis-replicas"]' # Array of services to exclude from the service discovery
+    FLUSH_DATABASE: "true" # Set to true if you want to flush the redis database on startup
+    REDIS_HOST: "kuberpc-redis-master.kuberpc-dev.svc.cluster.local" # Redis configuration
     REDIS_PORT: "6379"
     REDIS_PASSWORD: "vcEqSdpm5x"
