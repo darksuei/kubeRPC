@@ -7,7 +7,7 @@ const SERVER_HTTP = process.env.SERVER_HTTP_URL || "http://localhost:8081";
 
 const rpc = new KubeRPC({
   coreURL: process.env.KUBERPC_CORE_URL,
-  serviceName: "bench-client",
+  serviceName: "benchmark-client",
   port: 0,
 });
 
@@ -53,7 +53,7 @@ try {
   // ── 3. burst ────────────────────────────────────────────────────────────────
   const PINGS = 100;
   console.log(`\n── 3. burst  ${PINGS}x sequential ping ──`);
-  const rpcBurst  = await burstTotal(() => rpc.call("server", "ping"), PINGS);
+  const rpcBurst = await burstTotal(() => rpc.call("server", "ping"), PINGS);
   const httpBurst = await burstTotal(async () => (await fetch(`${SERVER_HTTP}/ping`)).json(), PINGS);
   const pct = (((httpBurst - rpcBurst) / httpBurst) * 100).toFixed(1);
   console.log(`  kubeRPC  ${rpcBurst.toFixed(2)}ms total`);

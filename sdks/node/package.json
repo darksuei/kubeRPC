@@ -1,14 +1,17 @@
 {
   "name": "kuberpc-node",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Node.js SDK for kubeRPC. Register and invoke service methods over raw TCP.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "start": "node dist/index.js",
     "build": "rimraf dist && tsc",
-    "build:all": "rimraf dist && tsc && yarn --cwd samples/server install --force && yarn --cwd samples/client install --force && yarn --cwd benchmarks/server install --force && yarn --cwd benchmarks/client install --force"
+    "build:all": "rimraf dist && tsc && yarn --cwd samples/server install --force && yarn --cwd samples/client install --force && yarn --cwd benchmark/server install --force && yarn --cwd benchmark/client install --force"
   },
   "keywords": [
     "RPC",

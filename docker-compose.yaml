@@ -1,6 +1,7 @@
 version: "3.8"
 services:
   kuberpc:
+    image: darksueii/kuberpc:1.0.0
     build:
       context: .
       dockerfile: Dockerfile

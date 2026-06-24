@@ -8,7 +8,7 @@ app:
   port: 8088
   image:
     repository: docker.io/darksueii/kuberpc
-    tag: latest
+    tag: "1.0.0"
     pullPolicy: Always
 
 service:
