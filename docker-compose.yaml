@@ -13,17 +13,13 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${PORT}/health || exit 1"]
       interval: 10s
       retries: 10
       start_period: 60s
     environment:
-      KUBECONFIG_FILE: ${KUBECONFIG_FILE}
-      NAMESPACE: ${NAMESPACE}
       PORT: ${PORT}
-      ENABLE_DEFAULT_SERVICE_DISCOVERY: ${ENABLE_DEFAULT_SERVICE_DISCOVERY}
-      EXCLUDE_SERVICES: ${EXCLUDE_SERVICES}
-      FLUSH_DATABASE: ${FLUSH_DATABASE}
+      CACHE_TYPE: ${CACHE_TYPE}
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
       REDIS_PASSWORD: ${REDIS_PASSWORD}

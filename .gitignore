@@ -1,4 +1,4 @@
-.env
-.env.development
-tmp
-todo
+**/.env*
+**/tmp
+**/node_modules
+**/dist

@@ -1,0 +1,33 @@
+{
+  "name": "kuberpc-node",
+  "version": "0.1.0",
+  "description": "Node.js SDK for kubeRPC. Register and invoke service methods over raw TCP.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "start": "node dist/index.js",
+    "build": "rimraf dist && tsc",
+    "build:all": "rimraf dist && tsc && yarn --cwd samples/server install --force && yarn --cwd samples/client install --force && yarn --cwd benchmarks/server install --force && yarn --cwd benchmarks/client install --force"
+  },
+  "keywords": [
+    "RPC",
+    "KubeRPC",
+    "SDK"
+  ],
+  "author": "Folarin Raphael",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/darksuei/kuberpc-sdk.git"
+  },
+  "devDependencies": {
+    "@types/node": "^22.8.5",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@msgpack/msgpack": "^3.0.0-beta2",
+    "axios": "^1.7.7"
+  }
+}
