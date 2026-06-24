@@ -32,16 +32,16 @@ One of the challenges when transitioning from a monolithic architecture to micro
 
 ### **Deploying kubeRPC**
 
-kubeRPC can be deployed using a Helm chart.
+kubeRPC can be deployed using a helm chart.
 
 ```bash
-helm install kuberpc-core https://github.com/darksuei/kubeRPC/raw/main/helm_chart/kuberpc-core-0.1.0.tgz --namespace <your-namespace> -f /path/to/custom-values.yaml
+helm upgrade --install kuberpc-core \
+  oci://ghcr.io/darksuei/charts/kuberpc-core \
+  --version 1.0.0 \
+  -n kuberpc \
+  --create-namespace \
+  --wait
 ```
-
-Once installed, kubeRPC will:
-
-1. Monitor all services in the namespace.
-2. Register their DNS names and metadata for service-to-service communication.
 
 ---
 
