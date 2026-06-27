@@ -3,7 +3,10 @@ package api
 import (
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
+
+	"github.com/darksuei/kubeRPC/internal/metrics"
 )
 
 type statusRecorder struct {
@@ -24,6 +27,8 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		slog.Debug("request", "method", r.Method, "path", r.URL.Path, "query", r.URL.RawQuery)
 
 		next.ServeHTTP(rec, r)
+
+		metrics.HTTPRequests.WithLabelValues(r.Method, r.URL.Path, strconv.Itoa(rec.status)).Inc()
 
 		level := slog.LevelDebug
 		if rec.status >= 400 {

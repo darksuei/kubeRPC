@@ -8,6 +8,7 @@ import (
 
 	"github.com/darksuei/kubeRPC/internal/cache"
 	"github.com/darksuei/kubeRPC/internal/helpers"
+	"github.com/darksuei/kubeRPC/internal/metrics"
 )
 
 func RegisterMethods(w http.ResponseWriter, r *http.Request) {
@@ -57,6 +58,7 @@ func RegisterMethods(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to store method", http.StatusInternalServerError)
 			return
 		}
+		metrics.MethodRegistrations.Inc()
 		slog.Info("method registered", "service", req.ServiceName, "method", method.Name)
 	}
 

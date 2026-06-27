@@ -8,7 +8,6 @@ const SERVER_HTTP = process.env.SERVER_HTTP_URL || "http://localhost:8081";
 const rpc = new KubeRPC({
   coreURL: process.env.KUBERPC_CORE_URL,
   serviceName: "benchmark-client",
-  port: 0,
 });
 
 async function bench(fn, runs = 10) {
@@ -39,21 +38,21 @@ try {
   // ── 1. computation ──────────────────────────────────────────────────────────
   console.log("\n── 1. computation  fib(40), 10 runs ──");
   report(
-    await bench(() => rpc.call("server", "fib", { n: 40 })),
+    await bench(() => rpc.call("benchmark-server", "fib", { n: 40 })),
     await bench(async () => (await (await fetch(`${SERVER_HTTP}/fib?n=40`)).json()).result),
   );
 
   // ── 2. data transfer ────────────────────────────────────────────────────────
   console.log("\n── 2. data transfer  generate(5000 floats), 5 runs ──");
   report(
-    await bench(() => rpc.call("server", "generate", { count: 5000 }), 5),
+    await bench(() => rpc.call("benchmark-server", "generate", { count: 5000 }), 5),
     await bench(async () => (await (await fetch(`${SERVER_HTTP}/generate?count=5000`)).json()).result, 5),
   );
 
   // ── 3. burst ────────────────────────────────────────────────────────────────
   const PINGS = 100;
   console.log(`\n── 3. burst  ${PINGS}x sequential ping ──`);
-  const rpcBurst = await burstTotal(() => rpc.call("server", "ping"), PINGS);
+  const rpcBurst = await burstTotal(() => rpc.call("benchmark-server", "ping"), PINGS);
   const httpBurst = await burstTotal(async () => (await fetch(`${SERVER_HTTP}/ping`)).json(), PINGS);
   const pct = (((httpBurst - rpcBurst) / httpBurst) * 100).toFixed(1);
   console.log(`  kubeRPC  ${rpcBurst.toFixed(2)}ms total`);

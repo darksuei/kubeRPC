@@ -1,57 +1,75 @@
-# kubeRPC
+## KubeRPC
 
-**kubeRPC** is a **Kubernetes-native remote procedure call (RPC) framework** designed to enable seamless and low-latency communication between microservices deployed within the same Kubernetes cluster.
+**KubeRPC** is a **Kubernetes-native remote procedure call (RPC) framework** designed to enable seamless and low-latency communication between microservices deployed within the same Kubernetes cluster.
 
-## **Why kubeRPC?**
+<p align="center">
+  <img src="./assets/rpc.png" alt="RPC Overview" width="700" />
+</p>
 
-One of the challenges when transitioning from a monolithic architecture to microservices is **latency**. In a monolith, methods (e.g., `generateInvoice`) can be called directly with negligible network overhead. In contrast, microservices require exposing APIs (HTTP, GraphQL, etc.) these add significant latency and complexity to otherwise simple method calls.
+### **Why does it matter?**
 
-**kubeRPC** allows microservices to directly call each other's methods without relying on traditional API endpoints. This drastically reduces latency, simplifies communication, and preserves the speed of direct method calls.
+Microservice communication is typically implemented over HTTP-based APIs (REST, GraphQL, gRPC). While these are well-established, they introduce non-negligible overhead compared to in-process calls, especially in low latency environments.
 
-<div style="text-align: center;">
-  <img src="./assets/rpc.png" alt="RPC Overview" width="700">
-</div>
+In monolithic systems, function calls are in-process and incur no network serialization, routing, or gateway overhead. In distributed systems, even internal calls must traverse these layers.
+
+KubeRPC is designed for **internal, cluster-local service communication** where:
+
+- Services are already co-deployed in Kubernetes
+- Trust boundaries are internal (not public APIs)
+- Latency and call overhead are critical constraints
+
+It does not replace external APIs or public-facing HTTP interfaces. It is intended as a complementary mechanism for **high-frequency internal RPC-style interactions with low latency requirements**.
 
 ---
 
-## **How kubeRPC Works**
+#### **Benchmark**
 
-1. kubeRPC deploys a **core service** within your Kubernetes cluster (written in Go) that acts as the central orchestrator.
-2. kubeRPC **watches for all services** in the namespace and automatically registers their DNS names and other relevant metadata.
-3. Microservices can **register callable methods** with the kubeRPC core service.
-4. Other microservices can invoke these methods using the kubeRPC SDK, eliminating the need for HTTP or similar overhead.
+A simple benchmark was run using 10 sequential calls to `fib(40)` across services.
+
+#### **The Result?**
+
+KubeRPC showed approximately **~60% lower average latency** compared to equivalent HTTP-based service calls in the same cluster environment.
+
+[Benchmark source code](https://github.com/darksuei/kubeRPC/tree/main/sdks/node/benchmark)
 
 ---
 
-## **Setup and Deployment**
+### **How it works**
 
-### **Requirements**
+1. KubeRPC deploys a **core service** within your Kubernetes cluster that acts as the central orchestrator.
+2. Services can **register public functions** with the KubeRPC core service.
+3. Other services can then invoke these functions using the KubeRPC SDK, eliminating the need for API implementations.
+
+---
+
+### **Setup and Deployment**
+
+#### **Requirements**
 
 - A Kubernetes cluster (any version compatible with Helm).
-- Helm installed on your local machine.
 
-### **Deploying kubeRPC**
+#### **Deploying kubeRPC**
 
-kubeRPC can be deployed using a helm chart.
+KubeRPC can be deployed using a helm chart.
 
 ```bash
 helm upgrade --install kuberpc-core \
   oci://ghcr.io/darksuei/charts/kuberpc-core \
   --version 1.0.0 \
-  -n kuberpc \
+  -n KubeRPC \
   --create-namespace \
   --wait
 ```
 
 ---
 
-## **Usage**
+### **Usage**
 
-### **Registering Methods**
+#### **Registering Methods**
 
-To register methods, services must interact with the kubeRPC core using the kubeRPC SDK.
+To register methods, services must interact with the KubeRPC core using the KubeRPC SDK.
 
-### **Calling Methods**
+#### **Calling Methods**
 
 Once methods are registered, other services can directly invoke these methods using the SDK.
 
@@ -61,7 +79,7 @@ Once methods are registered, other services can directly invoke these methods us
 
 Currently, a **TypeScript SDK** is available:
 
-- TypeScript SDK: [Source code](https://github.com/darksuei/kubeRPC-sdk) | [NPM](https://www.npmjs.com/package/kuberpc-sdk)
+- Node.js SDK: [Source](https://github.com/darksuei/kubeRPC/tree/main/sdks/node) | [NPM](https://www.npmjs.com/package/kuberpc-sdk)
 
 We welcome contributions for SDKs in other programming languages!
 
@@ -69,10 +87,12 @@ We welcome contributions for SDKs in other programming languages!
 
 ## **Contributing**
 
-We encourage developers to contribute by:
+Contribution is very much welcome by:
 
 1. Building SDKs for other languages.
 2. Reporting bugs or requesting features via GitHub issues.
 3. Submitting pull requests to improve the core or SDKs.
 
-Check out the [Contribution Guide](#N/A) for more details.
+## **License**
+
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)

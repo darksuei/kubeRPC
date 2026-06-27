@@ -13,7 +13,9 @@ import (
 	service "github.com/darksuei/kubeRPC/internal/api/service"
 	"github.com/darksuei/kubeRPC/internal/cache"
 	"github.com/darksuei/kubeRPC/internal/logger"
+	_ "github.com/darksuei/kubeRPC/internal/metrics"
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -30,6 +32,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/health", api.Health)
+	mux.Handle("/metrics", promhttp.Handler())
 
 	mux.HandleFunc("/get-service", service.GetService)
 	mux.HandleFunc("/get-services", service.GetServices)

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/darksuei/kubeRPC/internal/cache"
+	"github.com/darksuei/kubeRPC/internal/metrics"
 )
 
 func GetMethod(w http.ResponseWriter, r *http.Request) {
@@ -49,6 +50,7 @@ func GetMethod(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	metrics.MethodLookups.WithLabelValues(serviceName, methodName).Inc()
 	slog.Info("method resolved", "service", serviceName, "method", methodName, "host", host, "port", port)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{

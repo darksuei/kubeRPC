@@ -1,13 +1,15 @@
 import net from "net";
 import axios, { AxiosInstance } from "axios";
-import { encode, decode } from "@msgpack/msgpack";
+import { pack, unpack } from "msgpackr";
 import { Handler, KubeRPCConfig } from "./@types";
 import { KubeRpcError } from "./errors";
 
-// Wire format (positional arrays to avoid encoding key strings on every call):
+// Wire format (positional arrays — avoids encoding key strings on every call):
 //   request  → [method: string, args: object]
 //   response → [null, result]  on success
 //   response → [errorMsg: string]  on error
+
+const DEFAULT_RPC_PORT = 7749;
 
 export class KubeRPC {
   private http: AxiosInstance;
@@ -18,7 +20,7 @@ export class KubeRPC {
   private endpointCache = new Map<string, { host: string; port: number }>();
   private locks = new Map<string, Promise<unknown>>();
 
-  constructor({ coreURL, serviceName, port, host = "0.0.0.0" }: KubeRPCConfig) {
+  constructor({ coreURL, serviceName, port = DEFAULT_RPC_PORT, host = "localhost" }: KubeRPCConfig) {
     this.config = { coreURL, serviceName, port, host };
     this.http = axios.create({ baseURL: coreURL });
   }
@@ -94,7 +96,7 @@ export class KubeRPC {
 
   private async handleInboundFrame(socket: net.Socket, frame: Buffer): Promise<void> {
     try {
-      const [method, args] = decode(frame) as [string, any];
+      const [method, args] = unpack(frame) as [string, any];
       const handler = this.handlers.get(method);
 
       if (!handler) {
@@ -110,10 +112,10 @@ export class KubeRPC {
   }
 
   private writeFrame(socket: net.Socket, payload: unknown): void {
-    const body = Buffer.from(encode(payload));
-    const frame = Buffer.alloc(4 + body.length);
-    frame.writeUInt32BE(body.length, 0);
-    body.copy(frame, 4);
+    const body = pack(payload);
+    const frame = Buffer.allocUnsafe(4 + body.byteLength);
+    frame.writeUInt32BE(body.byteLength, 0);
+    frame.set(body, 4);
     socket.write(frame);
   }
 
@@ -189,10 +191,10 @@ export class KubeRPC {
     args: Record<string, any>,
   ): Promise<any> {
     return new Promise((resolve, reject) => {
-      const body = Buffer.from(encode([method, args]));
-      const frame = Buffer.alloc(4 + body.length);
-      frame.writeUInt32BE(body.length, 0);
-      body.copy(frame, 4);
+      const body = pack([method, args]);
+      const frame = Buffer.allocUnsafe(4 + body.byteLength);
+      frame.writeUInt32BE(body.byteLength, 0);
+      frame.set(body, 4);
 
       let buf = Buffer.alloc(0);
 
@@ -215,7 +217,7 @@ export class KubeRPC {
 }
 
 function decodeResponse(buf: Buffer): { ok: true; value: any } | { ok: false; error: string } {
-  const raw = decode(buf);
+  const raw = unpack(buf);
   if (!Array.isArray(raw)) {
     return { ok: false, error: `Protocol mismatch: expected array, got ${typeof raw}. Restart the server.` };
   }

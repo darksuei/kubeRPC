@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/darksuei/kubeRPC/internal/cache"
+	"github.com/darksuei/kubeRPC/internal/metrics"
 )
 
 func DeleteService(w http.ResponseWriter, r *http.Request) {
@@ -33,6 +34,7 @@ func DeleteService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	metrics.RegisteredServices.Dec()
 	slog.Info("service deleted", "service", serviceName)
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Service %s deleted successfully", serviceName)

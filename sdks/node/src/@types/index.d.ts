@@ -1,7 +1,7 @@
 export interface KubeRPCConfig {
   coreURL: string;
   serviceName: string;
-  port: number;
+  port?: number;
   host?: string;
 }
 

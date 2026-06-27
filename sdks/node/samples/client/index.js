@@ -6,7 +6,6 @@ dotenv.config();
 const rpc = new KubeRPC({
   coreURL: process.env.KUBERPC_CORE_URL,
   serviceName: "client",
-  port: 0,
 });
 
 const result = await rpc.call("server", "fib", { n: 10 });

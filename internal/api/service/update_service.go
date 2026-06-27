@@ -8,6 +8,7 @@ import (
 
 	"github.com/darksuei/kubeRPC/internal/cache"
 	"github.com/darksuei/kubeRPC/internal/helpers"
+	"github.com/darksuei/kubeRPC/internal/metrics"
 )
 
 func UpdateService(w http.ResponseWriter, r *http.Request) {
@@ -55,6 +56,7 @@ func UpdateService(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	metrics.RegisteredServices.Inc()
 	slog.Info("service registered", "service", serviceName, "host", req.Host, "port", req.Port)
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Service %s updated successfully", serviceName)
