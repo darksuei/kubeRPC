@@ -1,6 +1,6 @@
 {
   "name": "kuberpc-node",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Node.js SDK for kubeRPC. Register and invoke service methods over raw TCP.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

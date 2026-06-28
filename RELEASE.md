@@ -1,18 +1,5 @@
 # Release Guide
 
-A release touches four independently published artifacts:
-
-| Artifact | Registry | Trigger |
-|---|---|---|
-| Core server Docker image | Docker Hub | Git tag push |
-| Sample and benchmark Docker images (4) | Docker Hub | Git tag push |
-| Helm chart | GHCR (OCI) | `charts/core/release.sh` |
-| Node.js SDK | npm | `sdks/node/release.sh` |
-
----
-
-## Steps
-
 ### 1. Publish the Helm chart
 
 The release script updates `Chart.yaml` (`version`, `appVersion`) and `values.yaml` (`app.image.tag`) to the new version, then packages and pushes to GHCR.

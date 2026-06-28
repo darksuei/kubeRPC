@@ -3,10 +3,10 @@ set -euo pipefail
 
 usage() {
   echo ""
-  echo "  Usage: $0 -t <npm-token> -v <version> [--otp <code>]"
+  echo "  Usage: $0 -v <version> [-t <npm-token>] [--otp <code>]"
   echo ""
-  echo "  -t, --token   npm access token (or set NPM_TOKEN env var)"
   echo "  -v, --version Version to release (e.g. 2.1.0)"
+  echo "  -t, --token   npm access token (optional if already set in .npmrc or NPM_TOKEN)"
   echo "  --otp         One-time password (required if 2FA is enabled)"
   echo ""
   exit 1
@@ -25,7 +25,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-[[ -z "$TOKEN" || -z "$VERSION" ]] && usage
+[[ -z "$VERSION" ]] && usage
 
 SDK_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SDK_DIR"
@@ -36,8 +36,10 @@ npm version "$VERSION" --no-git-tag-version
 echo "Building SDK..."
 yarn build
 
-echo "Authenticating with npm..."
-npm config set //registry.npmjs.org/:_authToken "$TOKEN"
+if [[ -n "$TOKEN" ]]; then
+  echo "Authenticating with npm..."
+  npm config set //registry.npmjs.org/:_authToken "$TOKEN"
+fi
 
 PUBLISH_ARGS="--access public"
 [[ -n "$OTP" ]] && PUBLISH_ARGS="$PUBLISH_ARGS --otp=$OTP"
@@ -45,4 +47,4 @@ PUBLISH_ARGS="--access public"
 echo "Publishing kuberpc-node@$VERSION..."
 npm publish $PUBLISH_ARGS
 
-echo "Done. Remember to commit the version bump in package.json."
+echo "Done."

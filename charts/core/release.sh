@@ -45,4 +45,4 @@ echo "Pushing $PACKAGE to oci://ghcr.io/$GHCR_USER/charts..."
 helm push "$PACKAGE" "oci://ghcr.io/$GHCR_USER/charts"
 
 rm -f "$PACKAGE"
-echo "Done. Remember to commit the version bump in Chart.yaml and values.yaml."
+echo "Done."
