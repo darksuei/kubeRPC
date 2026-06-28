@@ -1,4 +1,4 @@
-FROM golang:1.21.0
+FROM golang:1.23.2
 
 WORKDIR /app
 
@@ -10,5 +10,6 @@ COPY . ./
 RUN CGO_ENABLED=0 GOOS=linux go build -o /kuberpc ./cmd
 
 EXPOSE 8080
+EXPOSE 9443
 
 CMD ["/kuberpc"]

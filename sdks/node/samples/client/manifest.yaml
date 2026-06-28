@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kuberpc-sample-client
+  namespace: default
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      annotations:
+        # Opt into kubeRPC so KUBERPC_CORE_URL gets injected.
+        # No kuberpc.suei.io/service needed - this pod only calls, never registers.
+        kuberpc.suei.io/enabled: "true"
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: kuberpc-sample-client
+          image: docker.io/darksueii/kuberpc-sample-client:2.0.0
+          imagePullPolicy: Always
+          env:
+            - name: TARGET_SERVICE
+              value: "sample-server"

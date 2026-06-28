@@ -4,16 +4,12 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const SERVICE_NAME = process.env.SERVICE_NAME || "benchmark-server";
 const HTTP_PORT = Number(process.env.HTTP_PORT || 8081);
+const serviceName = process.env.KUBERPC_SERVICE_NAME ?? "benchmark-server";
 
-console.log(`[${SERVICE_NAME}] starting — core: ${process.env.KUBERPC_CORE_URL}`);
+console.log(`[${serviceName}] starting - core: ${process.env.KUBERPC_CORE_URL}`);
 
-const rpc = new KubeRPC({
-  coreURL: process.env.KUBERPC_CORE_URL,
-  serviceName: SERVICE_NAME,
-  host: process.env.RPC_HOST || "localhost",
-});
+const rpc = new KubeRPC();
 
 function fib(n) {
   if (n <= 1) return n;
@@ -42,24 +38,24 @@ app.get("/generate", (req, res) => {
 app.get("/ping", (_, res) => res.json({ result: "pong" }));
 
 app.listen(HTTP_PORT, async () => {
-  console.log(`[${SERVICE_NAME}] HTTP listening on :${HTTP_PORT}`);
+  console.log(`[${serviceName}] HTTP listening on :${HTTP_PORT}`);
 
   try {
     await rpc.register("fib", async ({ n }) => {
       const result = fib(n);
-      console.log(`[${SERVICE_NAME}] rpc:fib       n=${n}  →  ${result}`);
+      console.log(`[${serviceName}] rpc:fib       n=${n}  →  ${result}`);
       return result;
     });
     await rpc.register("generate", async ({ count }) => {
       const result = generate(count);
-      console.log(`[${SERVICE_NAME}] rpc:generate  count=${count}  →  ${count} floats`);
+      console.log(`[${serviceName}] rpc:generate  count=${count}  →  ${count} floats`);
       return result;
     });
     await rpc.register("ping", async () => "pong");
 
-    console.log(`[${SERVICE_NAME}] RPC ready on :7749  (methods: fib, generate, ping)`);
+    console.log(`[${serviceName}] RPC ready on :${process.env.KUBERPC_PORT ?? 7749}  (methods: fib, generate, ping)`);
   } catch (err) {
-    console.error(`[${SERVICE_NAME}] register failed:`, err.message);
+    console.error(`[${serviceName}] register failed:`, err.message);
     process.exit(1);
   }
 });

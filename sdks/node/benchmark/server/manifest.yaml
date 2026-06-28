@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kuberpc-bench-server
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kuberpc-bench-server
+  template:
+    metadata:
+      labels:
+        app: kuberpc-bench-server
+      annotations:
+        kuberpc.suei.io/enabled: "true"
+        # Must match the K8s Service name below.
+        kuberpc.suei.io/service: "benchmark-server"
+        kuberpc.suei.io/port: "7749"
+    spec:
+      containers:
+        - name: kuberpc-bench-server
+          image: docker.io/darksueii/kuberpc-bench-server:2.0.0
+          imagePullPolicy: Always
+          ports:
+            - name: rpc
+              containerPort: 7749
+            - name: http
+              containerPort: 8081
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+---
+# The HTTP port is required by the benchmark client for the HTTP vs RPC comparison.
+apiVersion: v1
+kind: Service
+metadata:
+  name: benchmark-server
+  namespace: default
+spec:
+  selector:
+    app: kuberpc-bench-server
+  type: ClusterIP
+  ports:
+    - name: rpc
+      protocol: TCP
+      port: 7749
+      targetPort: 7749
+    - name: http
+      protocol: TCP
+      port: 8081
+      targetPort: 8081

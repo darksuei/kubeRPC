@@ -8,6 +8,13 @@ import (
 	"github.com/darksuei/kubeRPC/internal/cache"
 )
 
+// serviceMetaFields are stored in the same hash as methods but are not methods.
+var serviceMetaFields = map[string]bool{
+	"serviceName": true,
+	"host":        true,
+	"port":        true,
+}
+
 func GetMethods(w http.ResponseWriter, r *http.Request) {
 	serviceName := r.URL.Query().Get("name")
 	if serviceName == "" {
@@ -15,20 +22,27 @@ func GetMethods(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serviceDetails, err := cache.Store.HGetAll("service:" + serviceName)
+	all, err := cache.Store.HGetAll("service:" + serviceName)
 	if err != nil {
 		slog.Error("get-methods: cache error", "service", serviceName, "error", err)
 		http.Error(w, "Error retrieving service", http.StatusInternalServerError)
 		return
 	}
 
-	if len(serviceDetails) == 0 {
+	if len(all) == 0 {
 		slog.Debug("get-methods: service not found", "service", serviceName)
 		http.Error(w, "Service not found", http.StatusNotFound)
 		return
 	}
 
-	slog.Debug("get-methods: returning", "service", serviceName, "fields", len(serviceDetails))
+	methods := make(map[string]json.RawMessage, len(all))
+	for k, v := range all {
+		if !serviceMetaFields[k] {
+			methods[k] = json.RawMessage(v)
+		}
+	}
+
+	slog.Debug("get-methods: returning", "service", serviceName, "count", len(methods))
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(serviceDetails)
+	json.NewEncoder(w).Encode(methods)
 }

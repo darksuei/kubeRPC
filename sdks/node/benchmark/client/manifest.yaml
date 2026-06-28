@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kuberpc-bench-client
+  namespace: default
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      annotations:
+        kuberpc.suei.io/enabled: "true"
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: kuberpc-bench-client
+          image: docker.io/darksueii/kuberpc-bench-client:2.0.0
+          imagePullPolicy: Always
+          env:
+            - name: SERVER_HTTP_URL
+              value: "http://benchmark-server:8081"

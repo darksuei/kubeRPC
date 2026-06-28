@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kuberpc-sample-server
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kuberpc-sample-server
+  template:
+    metadata:
+      labels:
+        app: kuberpc-sample-server
+      annotations:
+        # Opt this pod into kubeRPC env injection.
+        kuberpc.suei.io/enabled: "true"
+        # Must match the K8s Service name below.
+        kuberpc.suei.io/service: "sample-server"
+        # Optional - defaults to 7749 if omitted.
+        kuberpc.suei.io/port: "7749"
+    spec:
+      containers:
+        - name: kuberpc-sample-server
+          image: docker.io/darksueii/kuberpc-sample-server:2.0.0
+          imagePullPolicy: Always
+          ports:
+            - name: rpc
+              containerPort: 7749
+            - name: http
+              containerPort: 8081
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+---
+# The Service name MUST match kuberpc.suei.io/service above.
+# kubeRPC clients resolve this service as sample-server.<namespace>.svc.cluster.local
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-server
+  namespace: default
+spec:
+  selector:
+    app: kuberpc-sample-server
+  type: ClusterIP
+  ports:
+    - name: rpc
+      protocol: TCP
+      port: 7749
+      targetPort: 7749
+    - name: http
+      protocol: TCP
+      port: 8081
+      targetPort: 8081

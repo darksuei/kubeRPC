@@ -4,14 +4,13 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const SERVICE_NAME = process.env.SERVICE_NAME || "server";
 const HTTP_PORT = Number(process.env.HTTP_PORT || 8081);
 
-const rpc = new KubeRPC({
-  coreURL: process.env.KUBERPC_CORE_URL,
-  serviceName: SERVICE_NAME,
-  host: process.env.RPC_HOST || "localhost",
-});
+// In Kubernetes, KUBERPC_CORE_URL, KUBERPC_SERVICE_NAME, KUBERPC_HOST and KUBERPC_PORT
+// are injected automatically via the admission webhook. Outside Kubernetes,
+// pass them explicitly like so:
+// const rpc = new KubeRPC({ coreURL: "http://localhost:8080", serviceName: "sample-server", host: "localhost", port: 7749 });
+const rpc = new KubeRPC();
 
 function fib(n) {
   if (n <= 1) return n;
@@ -25,9 +24,9 @@ express()
   .listen(HTTP_PORT, async () => {
     try {
       await rpc.register("fib", async ({ n }) => fib(n));
-      console.log(`[${SERVICE_NAME}] ready — HTTP :${HTTP_PORT}  RPC :7749`);
+      console.log(`[${process.env.KUBERPC_SERVICE_NAME ?? "server"}] ready - HTTP :${HTTP_PORT}  RPC :${process.env.KUBERPC_PORT ?? 7749}`);
     } catch (err) {
-      console.error(`[${SERVICE_NAME}] failed to start:`, err.message);
+      console.error("failed to start:", err.message);
       process.exit(1);
     }
   });

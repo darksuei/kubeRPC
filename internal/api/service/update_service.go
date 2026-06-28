@@ -34,6 +34,14 @@ func UpdateService(w http.ResponseWriter, r *http.Request) {
 
 	redisKey := "service:" + serviceName
 
+	existing, err := cache.Store.HGetAll(redisKey)
+	if err != nil {
+		slog.Error("update-service: lookup failed", "service", serviceName, "error", err)
+		http.Error(w, "Failed to check service", http.StatusInternalServerError)
+		return
+	}
+	isNew := len(existing) == 0
+
 	if err := cache.Store.HSet(redisKey, "serviceName", serviceName); err != nil {
 		slog.Error("update-service: store serviceName failed", "service", serviceName, "error", err)
 		http.Error(w, "Failed to store service", http.StatusInternalServerError)
@@ -56,7 +64,9 @@ func UpdateService(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	metrics.RegisteredServices.Inc()
+	if isNew {
+		metrics.RegisteredServices.Inc()
+	}
 	slog.Info("service registered", "service", serviceName, "host", req.Host, "port", req.Port)
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Service %s updated successfully", serviceName)

@@ -8,7 +8,7 @@ app:
   port: 8080
   image:
     repository: docker.io/darksueii/kuberpc
-    tag: "1.0.0"
+    tag: "2.0.0"
     pullPolicy: Always
 
 service:
@@ -23,3 +23,18 @@ secret:
     REDIS_HOST: ""
     REDIS_PORT: ""
     REDIS_PASSWORD: ""
+
+webhook:
+  enabled: true
+  port: 9443
+  # URL injected into pods as KUBERPC_CORE_URL.
+  # Defaults to http://<app.name>.<release-namespace>.svc.cluster.local:<app.port>
+  coreURL: ""
+  tlsSecretName: kuberpc-core-webhook-tls
+
+# Set certManager.enabled=true if cert-manager is available in the cluster.
+# When false, the chart generates a self-signed cert via Helm's genCA/genSignedCert.
+certManager:
+  enabled: false
+  issuerName: ""       # name of a cert-manager Issuer or ClusterIssuer
+  issuerKind: Issuer   # Issuer | ClusterIssuer
