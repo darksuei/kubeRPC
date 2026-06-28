@@ -20,6 +20,10 @@ KubeRPC is designed for **internal, cluster-local service communication** where:
 
 This does not replace external APIs or public-facing HTTP interfaces. It is intended as a complementary mechanism for **high-frequency internal RPC-style communication with low latency requirements**.
 
+#### **Why not just open raw TCP between services?**
+
+Raw TCP between services is unaware of kubernetes. You would need to manually wire hostnames and ports into every service, manage that configuration across environments, and keep it in sync as services are added, moved, or scaled. kubeRPC delegates all of that to the cluster itself. The admission webhook watches your pod annotations and injects the correct configuration at scheduling time - services discover each other through kubernetes DNS and the registry without any developer-managed config. Adding a new service to the mesh is an annotation, not a configuration change across every other service that needs to reach it.
+
 ---
 
 #### **Benchmark**
@@ -113,6 +117,20 @@ Currently, a **TypeScript SDK** is available:
 - Node.js SDK: [Source](https://github.com/darksuei/kubeRPC/tree/main/sdks/node) | [NPM](https://www.npmjs.com/package/kuberpc-node)
 
 We welcome contributions for SDKs in other programming languages!
+
+---
+
+## **Future Work**
+
+| # | Item | Status |
+|---|---|---|
+| 1 | **Request multiplexing** — concurrent calls to the same service are currently serialised through a promise queue. | Not started |
+| 2 | **Retries, timeouts and error handling** — failed calls propagate immediately to the caller with no retry, and calls to an unresponsive service hang indefinitely. | Partially done — typed errors exist; timeouts and retries are not implemented |
+| 3 | **Additional SDKs** — kubeRPC is language-agnostic at the protocol level but we currently only ship a Node.js SDK. | Not started |
+| 4 | **Service TTL and heartbeat** — if a pod crashes without cleanly deregistering, its entry stays in the registry indefinitely and callers resolve a dead endpoint. | Not started |
+| 5 | **RPC-level observability** — we have Prometheus metrics for core HTTP traffic and method registration counts, but no per-method call latency histograms, success/failure rates, or active connection gauges. | Not started |
+| 6 | **Namespace-scoped registry** — registry keys are currently `service:<name>` with no namespace component, meaning two services with the same name in different kubernetes namespaces will collide. | Not started |
+| 7 | **Security** — currently any pod in the cluster can register or deregister any service, and RPC traffic between services travels over plain TCP. | Not started |
 
 ---
 
