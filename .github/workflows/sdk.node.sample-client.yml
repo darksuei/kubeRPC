@@ -1,4 +1,4 @@
-name: Core / Build
+name: SDK / Node / Sample Client
 
 on:
   push:
@@ -6,11 +6,10 @@ on:
       - main
       - development
     paths:
-      - "cmd/**"
-      - "internal/**"
-      - "go.mod"
-      - "go.sum"
-      - "Dockerfile"
+      - "sdks/node/src/**"
+      - "sdks/node/package.json"
+      - "sdks/node/tsconfig.json"
+      - "sdks/node/samples/client/**"
 
 jobs:
   build-and-push:
@@ -32,6 +31,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: sdks/node
+          file: sdks/node/samples/client/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/kuberpc:2.0.0
+          tags: ${{ secrets.DOCKER_USERNAME }}/kuberpc-sample-client:2.0.0

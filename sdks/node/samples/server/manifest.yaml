@@ -1,17 +1,3 @@
-# kubeRPC sample - server
-#
-# Build and push the image first (from sdks/node/):
-#   docker build -f samples/server/Dockerfile -t docker.io/darksueii/kuberpc-sample-server:2.0.0 .
-#   docker push docker.io/darksueii/kuberpc-sample-server:2.0.0
-#
-# Apply:
-#   kubectl apply -f sdks/node/samples/server/manifest.yaml
-#
-# The admission webhook will inject KUBERPC_CORE_URL, KUBERPC_SERVICE_NAME,
-# KUBERPC_HOST, and KUBERPC_PORT into the pod automatically.
-# The K8s Service below MUST be named to match kuberpc.suei.io/service so
-# that DNS resolution (KUBERPC_HOST) routes RPC traffic to this pod.
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
