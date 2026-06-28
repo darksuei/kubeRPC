@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"log"
+	"log/slog"
 	"os"
 )
 
@@ -11,15 +11,15 @@ func Init() {
 	backend := os.Getenv("CACHE_TYPE")
 	if backend == "memory" {
 		Store = NewMemoryCache()
-		log.Println("Cache: using in-memory store")
+		slog.Info("cache: using in-memory store")
 	} else {
 		Store = NewRedisCache()
-		log.Println("Cache: using Redis store")
+		slog.Info("cache: using Redis store")
 	}
 
-	if err := Store.FlushDB(); err != nil {
-		log.Printf("Cache: flush failed: %v", err)
+	if err := Store.Ping(); err != nil {
+		slog.Error("cache: ping failed", "error", err)
 	} else {
-		log.Println("Cache: flushed successfully")
+		slog.Info("cache: connected")
 	}
 }

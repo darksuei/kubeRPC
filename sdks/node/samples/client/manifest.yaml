@@ -1,0 +1,39 @@
+# kubeRPC sample - client
+#
+# Build and push the image first (from sdks/node/):
+#   docker build -f samples/client/Dockerfile -t docker.io/darksueii/kuberpc-sample-client:2.0.0 .
+#   docker push docker.io/darksueii/kuberpc-sample-client:2.0.0
+#
+# Deploy the server first and wait for it to be ready before running this Job:
+#   kubectl apply -f sdks/node/samples/server/manifest.yaml
+#   kubectl rollout status deployment/kuberpc-sample-server
+#   kubectl apply -f sdks/node/samples/client/manifest.yaml
+#
+# Check the result:
+#   kubectl logs job/kuberpc-sample-client
+#
+# The admission webhook injects KUBERPC_CORE_URL automatically.
+# TARGET_SERVICE must match the kuberpc.suei.io/service annotation on the server.
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kuberpc-sample-client
+  namespace: default
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      annotations:
+        # Opt into kubeRPC so KUBERPC_CORE_URL gets injected.
+        # No kuberpc.suei.io/service needed - this pod only calls, never registers.
+        kuberpc.suei.io/enabled: "true"
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: kuberpc-sample-client
+          image: docker.io/darksueii/kuberpc-sample-client:2.0.0
+          imagePullPolicy: Always
+          env:
+            - name: TARGET_SERVICE
+              value: "sample-server"

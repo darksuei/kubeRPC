@@ -1,0 +1,115 @@
+{{- if .Values.webhook.enabled }}
+
+{{- /*
+  TLS strategy:
+  - certManager.enabled=false (default): Helm generates a self-signed CA and server cert.
+    lookup() reuses the existing Secret on upgrades so the caBundle never drifts.
+  - certManager.enabled=true: cert-manager owns cert lifecycle via a Certificate resource.
+    The caBundle is read from the existing Secret that cert-manager populates.
+*/ -}}
+
+{{- $ns := .Release.Namespace }}
+{{- $svcName := .Values.app.name }}
+{{- $secretName := .Values.webhook.tlsSecretName }}
+
+{{- $ca  := "" }}
+{{- $crt := "" }}
+{{- $key := "" }}
+
+{{- $existing := lookup "v1" "Secret" $ns $secretName }}
+
+{{- if .Values.certManager.enabled }}
+
+{{- /* cert-manager path: read whatever cert-manager already wrote */ -}}
+{{- if $existing }}
+{{- $ca  = index $existing.data "ca.crt"  | default "" }}
+{{- $crt = index $existing.data "tls.crt" | default "" }}
+{{- $key = index $existing.data "tls.key" | default "" }}
+{{- end }}
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $svcName }}-webhook-cert
+  namespace: {{ $ns }}
+spec:
+  secretName: {{ $secretName }}
+  dnsNames:
+    - {{ $svcName }}.{{ $ns }}.svc
+    - {{ $svcName }}.{{ $ns }}.svc.cluster.local
+  issuerRef:
+    name: {{ .Values.certManager.issuerName }}
+    kind: {{ .Values.certManager.issuerKind }}
+
+{{- else }}
+
+{{- /* Helm-native self-signed path */ -}}
+{{- if $existing }}
+{{- $ca  = index $existing.data "ca.crt"  | default "" }}
+{{- $crt = index $existing.data "tls.crt" | default "" }}
+{{- $key = index $existing.data "tls.key" | default "" }}
+{{- else }}
+{{- $caObj   := genCA "kuberpc-ca" 3650 }}
+{{- $san1    := printf "%s.%s.svc" $svcName $ns }}
+{{- $san2    := printf "%s.%s.svc.cluster.local" $svcName $ns }}
+{{- $certObj := genSignedCert $san1 nil (list $san1 $san2) 3650 $caObj }}
+{{- $ca  = $caObj.Cert  | b64enc }}
+{{- $crt = $certObj.Cert | b64enc }}
+{{- $key = $certObj.Key  | b64enc }}
+{{- end }}
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $secretName }}
+  namespace: {{ $ns }}
+  annotations:
+    # Prevent helm uninstall from deleting the cert so upgrades can reuse it.
+    helm.sh/resource-policy: keep
+type: kubernetes.io/tls
+data:
+  ca.crt:  {{ $ca }}
+  tls.crt: {{ $crt }}
+  tls.key: {{ $key }}
+
+{{- end }}
+
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ $svcName }}-webhook
+  {{- if .Values.certManager.enabled }}
+  annotations:
+    cert-manager.io/inject-ca-from: {{ $ns }}/{{ $svcName }}-webhook-cert
+  {{- end }}
+webhooks:
+  - name: mutate.kuberpc.suei.io
+    admissionReviewVersions: ["v1"]
+    clientConfig:
+      service:
+        name: {{ $svcName }}
+        namespace: {{ $ns }}
+        path: /mutate
+        port: {{ .Values.webhook.port }}
+      {{- if not .Values.certManager.enabled }}
+      caBundle: {{ $ca }}
+      {{- end }}
+    rules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE"]
+        resources: ["pods"]
+    # Ignore keeps a broken webhook from blocking pod scheduling.
+    failurePolicy: Ignore
+    sideEffects: None
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values:
+            - kube-system
+            - kube-public
+            - {{ $ns }}
+
+{{- end }}

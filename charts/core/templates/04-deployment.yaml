@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.app.name }}
-  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: {{ .Values.app.replicas }}
   selector:
@@ -19,7 +19,47 @@ spec:
           image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
           imagePullPolicy: {{ .Values.app.image.pullPolicy }}
           ports:
-            - containerPort: {{ .Values.app.port }}
+            - name: http
+              containerPort: {{ .Values.app.port }}
+            {{- if .Values.webhook.enabled }}
+            - name: webhook
+              containerPort: {{ .Values.webhook.port }}
+            {{- end }}
           envFrom:
             - secretRef:
                 name: {{ .Values.secret.name }}
+          env:
+            {{- if .Values.webhook.enabled }}
+            - name: WEBHOOK_PORT
+              value: {{ .Values.webhook.port | quote }}
+            - name: KUBERPC_CORE_URL
+              value: {{ .Values.webhook.coreURL | default (printf "http://%s.%s.svc.cluster.local:%v" .Values.app.name .Release.Namespace .Values.app.port) | quote }}
+            - name: TLS_CERT_PATH
+              value: /etc/kuberpc/tls/tls.crt
+            - name: TLS_KEY_PATH
+              value: /etc/kuberpc/tls/tls.key
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.app.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.app.port }}
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          {{- if .Values.webhook.enabled }}
+          volumeMounts:
+            - name: tls
+              mountPath: /etc/kuberpc/tls
+              readOnly: true
+          {{- end }}
+      {{- if .Values.webhook.enabled }}
+      volumes:
+        - name: tls
+          secret:
+            secretName: {{ .Values.webhook.tlsSecretName }}
+      {{- end }}

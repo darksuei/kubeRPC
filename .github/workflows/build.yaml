@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - development
 
 jobs:
   build:
@@ -27,4 +28,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/kuberpc:1.0.1
+          tags: ${{ secrets.DOCKER_USERNAME }}/kuberpc:2.0.0

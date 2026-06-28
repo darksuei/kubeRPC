@@ -4,12 +4,23 @@ import { pack, unpack } from "msgpackr";
 import { Handler, KubeRPCConfig } from "./@types";
 import { KubeRpcError } from "./errors";
 
-// Wire format (positional arrays — avoids encoding key strings on every call):
+// Wire format (positional arrays - avoids encoding key strings on every call):
 //   request  → [method: string, args: object]
 //   response → [null, result]  on success
 //   response → [errorMsg: string]  on error
 
 const DEFAULT_RPC_PORT = 7749;
+
+export class ServiceProxy {
+  constructor(
+    private readonly name: string,
+    private readonly rpc: KubeRPC,
+  ) {}
+
+  call(method: string, args: Record<string, any> = {}): Promise<any> {
+    return this.rpc.call(this.name, method, args);
+  }
+}
 
 export class KubeRPC {
   private http: AxiosInstance;
@@ -20,9 +31,22 @@ export class KubeRPC {
   private endpointCache = new Map<string, { host: string; port: number }>();
   private locks = new Map<string, Promise<unknown>>();
 
-  constructor({ coreURL, serviceName, port = DEFAULT_RPC_PORT, host = "localhost" }: KubeRPCConfig) {
+  constructor(config: KubeRPCConfig = {}) {
+    const coreURL = config.coreURL ?? process.env.KUBERPC_CORE_URL ?? "";
+    const serviceName = config.serviceName ?? process.env.KUBERPC_SERVICE_NAME ?? "";
+    const port = config.port ?? Number(process.env.KUBERPC_PORT ?? DEFAULT_RPC_PORT);
+    const host = config.host ?? process.env.KUBERPC_HOST ?? "localhost";
+
+    if (!coreURL) {
+      throw new Error("kubeRPC: coreURL is required. Pass it via config or set KUBERPC_CORE_URL.");
+    }
+
     this.config = { coreURL, serviceName, port, host };
     this.http = axios.create({ baseURL: coreURL });
+  }
+
+  service(name: string): ServiceProxy {
+    return new ServiceProxy(name, this);
   }
 
   async register(name: string, handler: Handler): Promise<void> {
