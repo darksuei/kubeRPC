@@ -2,14 +2,8 @@ name: SDK / Node / Sample Server
 
 on:
   push:
-    branches:
-      - main
-      - development
-    paths:
-      - "sdks/node/src/**"
-      - "sdks/node/package.json"
-      - "sdks/node/tsconfig.json"
-      - "sdks/node/samples/server/**"
+    tags:
+      - "*"
 
 jobs:
   build-and-push:
@@ -34,4 +28,4 @@ jobs:
           context: sdks/node
           file: sdks/node/samples/server/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/kuberpc-sample-server:2.0.0
+          tags: ${{ secrets.DOCKER_USERNAME }}/kuberpc-sample-server:${{ github.ref_name }}

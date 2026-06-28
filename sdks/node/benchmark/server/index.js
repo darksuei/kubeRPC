@@ -43,12 +43,12 @@ app.listen(HTTP_PORT, async () => {
   try {
     await rpc.register("fib", async ({ n }) => {
       const result = fib(n);
-      console.log(`[${serviceName}] rpc:fib       n=${n}  →  ${result}`);
+      console.log(`[${serviceName}] rpc:fib       n=${n} result=${result}`);
       return result;
     });
     await rpc.register("generate", async ({ count }) => {
       const result = generate(count);
-      console.log(`[${serviceName}] rpc:generate  count=${count}  →  ${count} floats`);
+      console.log(`[${serviceName}] rpc:generate  count=${count} floats`);
       return result;
     });
     await rpc.register("ping", async () => "pong");

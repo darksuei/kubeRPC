@@ -5,9 +5,9 @@ import { Handler, KubeRPCConfig } from "./@types";
 import { KubeRpcError } from "./errors";
 
 // Wire format (positional arrays - avoids encoding key strings on every call):
-//   request  → [method: string, args: object]
-//   response → [null, result]  on success
-//   response → [errorMsg: string]  on error
+//   request:  [method: string, args: object]
+//   response: [null, result]  on success
+//   response: [errorMsg: string]  on error
 
 const DEFAULT_RPC_PORT = 7749;
 
