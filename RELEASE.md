@@ -56,15 +56,3 @@ Pushing a tag triggers all GitHub Actions workflows, which build and push the Do
 git tag <version>
 git push origin <version>
 ```
-
----
-
-## Version checklist
-
-Before tagging, confirm these are all set to the same version:
-
-- [ ] `charts/core/Chart.yaml` -- `version` and `appVersion`
-- [ ] `charts/core/values.yaml` -- `app.image.tag`
-- [ ] `sdks/node/package.json` -- `version`
-
-The release scripts in steps 1 and 2 handle these automatically.
