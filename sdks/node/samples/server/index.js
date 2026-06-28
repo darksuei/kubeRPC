@@ -7,8 +7,9 @@ dotenv.config();
 const HTTP_PORT = Number(process.env.HTTP_PORT || 8081);
 
 // In Kubernetes, KUBERPC_CORE_URL, KUBERPC_SERVICE_NAME, KUBERPC_HOST and KUBERPC_PORT
-// are injected automatically via the admission webhook. Outside Kubernetes, set them
-// in your .env file or pass them explicitly here.
+// are injected automatically via the admission webhook. Outside Kubernetes,
+// pass them explicitly like so:
+// const rpc = new KubeRPC({ coreURL: "http://localhost:8080", serviceName: "sample-server", host: "localhost", port: 7749 });
 const rpc = new KubeRPC();
 
 function fib(n) {

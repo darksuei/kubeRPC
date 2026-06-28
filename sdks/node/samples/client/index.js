@@ -13,7 +13,6 @@ const targetService = process.env.TARGET_SERVICE ?? "sample-server";
 const server = rpc.service(targetService);
 
 const result = await server.call("fib", { n: 10 });
-
 console.log(`fib(10) = ${result}`);
 
 rpc.close();

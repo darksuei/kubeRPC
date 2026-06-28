@@ -1,6 +1,6 @@
 ## KubeRPC
 
-**KubeRPC** is a **Kubernetes-native remote procedure call (RPC) framework** designed to enable seamless and low-latency communication between microservices deployed within the same Kubernetes cluster.
+**KubeRPC** is a **kubernetes-native remote procedure call (RPC) framework** designed to enable seamless and low-latency communication between microservices deployed within the same kubernetes cluster.
 
 <p align="center">
   <img src="./assets/rpc.png" alt="RPC Overview" width="700" />
@@ -14,11 +14,11 @@ In monolithic systems, function calls are in-process and incur no network serial
 
 KubeRPC is designed for **internal, cluster-local service communication** where:
 
-- Services are already co-deployed in Kubernetes
-- Trust boundaries are internal (not public APIs)
-- Latency and call overhead are critical constraints
+- Services are already co-deployed in kubernetes
+- Trust boundaries are internal (not public)
+- Latency is a critical constraint
 
-It does not replace external APIs or public-facing HTTP interfaces. It is intended as a complementary mechanism for **high-frequency internal RPC-style interactions with low latency requirements**.
+This does not replace external APIs or public-facing HTTP interfaces. It is intended as a complementary mechanism for **high-frequency internal RPC-style communication with low latency requirements**.
 
 ---
 
@@ -36,9 +36,10 @@ KubeRPC showed approximately **~60% lower average latency** compared to equivale
 
 ### **How it works**
 
-1. KubeRPC deploys a **core service** within your Kubernetes cluster that acts as the central orchestrator.
-2. Services can **register public functions** with the KubeRPC core service.
-3. Other services can then invoke these functions using the KubeRPC SDK, eliminating the need for API implementations.
+1. KubeRPC deploys a **core service** within your kubernetes cluster that acts as the central service registry.
+2. A **mutating admission webhook** bundled with the core watches for pods annotated with `kuberpc.suei.io/enabled: "true"` and automatically injects the runtime configuration (`KUBERPC_CORE_URL`, `KUBERPC_SERVICE_NAME`, `KUBERPC_HOST`, `KUBERPC_PORT`) at pod creation time.
+3. Services **register callable methods** with the KubeRPC core on startup. No manual configuration is required inside the cluster.
+4. Other services resolve and invoke those methods using the KubeRPC SDK. All RPC traffic flows directly between services over persistent TCP connections. The core is only consulted for endpoint resolution.
 
 ---
 
@@ -46,17 +47,17 @@ KubeRPC showed approximately **~60% lower average latency** compared to equivale
 
 #### **Requirements**
 
-- A Kubernetes cluster (any version compatible with Helm).
+- A kubernetes cluster (any version compatible with Helm).
 
 #### **Deploying kubeRPC**
 
-KubeRPC can be deployed using a helm chart.
+KubeRPC can be deployed using a Helm chart. The admission webhook and TLS certificates are included and configured automatically.
 
 ```bash
 helm upgrade --install kuberpc-core \
   oci://ghcr.io/darksuei/charts/kuberpc-core \
-  --version 1.0.0 \
-  -n KubeRPC \
+  --version 2.0.0 \
+  -n kuberpc \
   --create-namespace \
   --wait
 ```
@@ -65,13 +66,43 @@ helm upgrade --install kuberpc-core \
 
 ### **Usage**
 
+#### **Opt your pods in**
+
+Annotate any pod you want kubeRPC to configure:
+
+```yaml
+annotations:
+  kuberpc.suei.io/enabled: "true"        # required, triggers env injection
+  kuberpc.suei.io/service: "my-service"  # required for servers, sets service name and host
+  kuberpc.suei.io/port: "7749"           # optional, defaults to 7749
+```
+
+> The kubernetes `Service` fronting your pod must be named to match `kuberpc.suei.io/service` so that peer services can reach it via cluster DNS.
+
 #### **Registering Methods**
 
-To register methods, services must interact with the KubeRPC core using the KubeRPC SDK.
+Once annotated, the SDK needs no configuration inside the cluster:
+
+```js
+import { KubeRPC } from "kuberpc-node";
+
+const rpc = new KubeRPC();
+
+await rpc.register("getUser", async ({ id }) => {
+  return db.users.findById(id);
+});
+```
 
 #### **Calling Methods**
 
-Once methods are registered, other services can directly invoke these methods using the SDK.
+```js
+import { KubeRPC } from "kuberpc-node";
+
+const rpc = new KubeRPC();
+
+const userService = rpc.service("user-service");
+const user = await userService.call("getUser", { id: "123" });
+```
 
 ---
 
@@ -79,7 +110,7 @@ Once methods are registered, other services can directly invoke these methods us
 
 Currently, a **TypeScript SDK** is available:
 
-- Node.js SDK: [Source](https://github.com/darksuei/kubeRPC/tree/main/sdks/node) | [NPM](https://www.npmjs.com/package/kuberpc-sdk)
+- Node.js SDK: [Source](https://github.com/darksuei/kubeRPC/tree/main/sdks/node) | [NPM](https://www.npmjs.com/package/kuberpc-node)
 
 We welcome contributions for SDKs in other programming languages!
 
